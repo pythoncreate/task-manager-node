@@ -1,7 +1,7 @@
 const express = require("express");
 const User = require("../models/user");
-const router = new express.Router();
 const auth = require("../middleware/auth");
+const router = new express.Router();
 
 router.get("/test", (req, res) => {
   res.send("test test test");
@@ -33,19 +33,40 @@ router.post("/users/login", async (req, res) => {
     const token = await user.generateAuthToken();
     res.send({ user, token });
   } catch (e) {
+    console.log(e.message);
     res.status(400).send();
   }
 });
 
-//Get All Users
+//logout one user
 
-router.get("/users", auth, async (req, res) => {
+router.post("/users/logout", auth, async (req, res) => {
   try {
-    const users = await User.find({});
-    res.send(users);
+    req.user.tokens = req.user.tokens.filter(token => {
+      return token.token !== req.token;
+    });
+    await req.user.save();
+    res.send();
   } catch (e) {
     res.status(500).send();
   }
+});
+
+//logout all users
+router.post("/users/logoutAll", auth, async (req, res) => {
+  try {
+    req.user.tokens = [];
+    await req.user.save();
+    res.send();
+  } catch (e) {
+    res.status(500).send();
+  }
+});
+
+//Get User Profile
+
+router.get("/users/me", auth, async (req, res) => {
+  res.send(req.user);
 });
 
 //Get User BY ID
