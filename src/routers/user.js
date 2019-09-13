@@ -3,18 +3,16 @@ const User = require("../models/user");
 const auth = require("../middleware/auth");
 const router = new express.Router();
 
-router.get("/test", (req, res) => {
-  res.send("test test test");
-});
-
 module.exports = router;
 
 //Create User
 
 router.post("/users", async (req, res) => {
   const user = new User(req.body);
+
   try {
     await user.save();
+    sendWelcomeEmail(user.email, user.name);
     const token = await user.generateAuthToken();
     res.status(201).send({ user, token });
   } catch (e) {
@@ -33,7 +31,6 @@ router.post("/users/login", async (req, res) => {
     const token = await user.generateAuthToken();
     res.send({ user, token });
   } catch (e) {
-    console.log(e.message);
     res.status(400).send();
   }
 });
@@ -46,6 +43,7 @@ router.post("/users/logout", auth, async (req, res) => {
       return token.token !== req.token;
     });
     await req.user.save();
+
     res.send();
   } catch (e) {
     res.status(500).send();
